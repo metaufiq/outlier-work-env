@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Test JavaScript Function</title>
+  <style>
+    .example-class {
+      color: blue;
+      font-weight: bold;
+    }
+    .additional-class {
+      font-style: italic;
+    }
+  </style>
+</head>
+<body>
+  <div id="test-element" class="example-class additional-class">
+    <div>
+    <div>sdasd</div>
+      
+      sdasd</div>
+    <div>sdasd</div>
+
+    This is a test element with some <span style="text-decoration: underline;">inline styles</span>.
+  </div>
+  <button id="generate-page">Generate New Page</button>
+  <pre id="output" style="background-color: #f0f0f0; padding: 10px; margin-top: 20px;"></pre>
+
+  <script>
+
+function isNested(element) {
+  return element.parentElement && element.parentElement.tagName.toLowerCase() !== 'body';
+}
+function createNewPageWithElementContent(elementId) {
+  // Get the element by its ID
+  const element = document.getElementById(elementId);
+  
+  if (isNested(element)) {
+    console.error('Nested oit');
+    return;
+  }
+  console.log()
+  // Check if the element exists
+  if (!element) {
+    console.error(`No element found with the ID: ${elementId}`);
+    return;
+  }
+
+  // Create a new window or tab
+  const newWindow = window.open("", "_blank");
+
+  // Write the new HTML document
+  newWindow.document.write(`
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>New Page</title>
+      <style>
+        /* Add your CSS classes here */
+        .content {
+          /* CSS properties will be added later */
+        }
+      </style>
+    </head>
+    <body>
+      <div class="content">
+        ${element.innerText.replace(/\n/g, "<br>")}
+      </div>
+    </body>
+    </html>
+  `);
+}
+
+    // Event listener for the button
+    document.getElementById('generate-page').addEventListener('click', () => {
+      const result = createNewPageWithElementContent('test-element');
+    });
+  </script>
+</body>
+</html>
