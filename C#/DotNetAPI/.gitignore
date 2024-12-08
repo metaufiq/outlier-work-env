@@ -1,0 +1,58 @@
+# .NET Core
+.vs/
+.vscode/
+.idea/
+bin/
+obj/
+
+# User-specific files
+*.user
+*.userosscache
+*.suo
+*.userprefs
+# User-specific files for Visual Studio for Mac
+.idea/
+
+# Windows Installer files
+*.cab
+*.msi
+*.msm
+*.msp
+
+# Windows Installer files for Visual Studio
+vs2019.vsconfig
+vs2017.vsconfig
+
+# .NET Core SDK
+global.json
+
+# ASP.NET Scaffolding
+ScaffoldingReadMe.txt
+
+# Azure Web App publish settings
+PublishProfiles/
+
+# npm packages
+node_modules/
+
+# Microsoft Azure App Service
+.vscode/
+
+# .NET Core logging
+appsettings.Development.json
+appsettings.Production.json
+appsettings.Local.json
+
+# Tye (if you're using Tye)
+.tye/
+
+# NuGet
+.nuget/
+# Add the directory that contains the NuGet configuration file (e.g. .nuget/)
+# *nuget.config
+
+# .NET Core Tools
+tool-manifest/
+
+# JetBrains Rider
+.
