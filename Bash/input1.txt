@@ -1,0 +1,3 @@
+entrypoint main
+constructor 1 init
+constructor 10 setup
