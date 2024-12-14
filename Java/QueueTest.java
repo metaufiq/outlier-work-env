@@ -11,28 +11,15 @@ public class QueueTest {
   }
   
   public static void testIntegerQueue() {
-      System.out.println("Testing Integer Queue:");
-      Queue<Integer> intQueue = new Queue<>(5);
-      
-      // Test enqueue
-      try {
-          intQueue.enqueue(10);
-          intQueue.enqueue(20);
-          intQueue.enqueue(30);
-          
-          // Print current queue state
-          System.out.println("Queue after enqueuing: " + intQueue);
-          
-          // Test size
-          System.out.println("Queue size: " + intQueue.size());
-          
-          // Test dequeue
-          int removed = intQueue.dequeue();
-          System.out.println("Dequeued element: " + removed);
-          System.out.println("Queue after dequeue: " + intQueue);
-      } catch (Exception e) {
-          System.out.println("Error in Integer Queue test: " + e.getMessage());
-      }
+    Queue<Integer> queue = new Queue(5);
+    queue.enqueue(1);
+    queue.enqueue(2);
+    queue.enqueue(3);
+    System.out.println(queue); // prints "1 2 3"
+    queue.dequeue();
+    System.out.println(queue); // prints "2 3"
+    System.out.println(queue.size()); // prints 2
+    System.out.println(queue.isEmpty()); // prints false
   }
   
   public static void testStringQueue() {
