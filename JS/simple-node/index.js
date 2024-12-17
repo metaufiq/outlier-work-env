@@ -18,6 +18,12 @@ const users = [
   { name: 'barbell row', reps: 10, weight: 40, unit: 'lbs', date: '11/5/2121' },
 ];
 
+/**
+* be sure to install multer and express before running the code (npm install express multer)
+**/
+/**
+ * 
+ */
 (async () => {
   for (const user of users) {
     await createUser(user.name, user.reps, user.weight, user.unit, user.date);
