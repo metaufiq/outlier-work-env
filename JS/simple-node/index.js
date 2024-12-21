@@ -1,31 +1,23 @@
-const axios = require('axios');
+const AWS = require('aws-sdk');
+const s3 = new AWS.S3();
 
-const createUser = async (name, reps, weight, unit, date) => {
-  const url = `http://localhost:3000/create?name=${name}&reps=${reps}&weight=${weight}&unit=${unit}&date=${date}`;
-  try {
-    const response = await axios.get(url);
-    console.log(response.data);
-  } catch (error) {
-    console.error(error);
-  }
-};
+function generateS3Url(organizationId, fileName) {
+  const params = {
+    Bucket: 'your-s3-bucket-name',
+    Key: `path/to/files/${organizationId}/${fileName}`,
+    Expires: 60 * 5 // 5 minutes expiration time
+  };
 
-const users = [
-  { name: 'squat', reps: 10, weight: 33, unit: 'lbs', date: '11/1/2121' },
-  { name: 'bench press', reps: 8, weight: 50, unit: 'lbs', date: '11/2/2121' },
-  { name: 'deadlift', reps: 6, weight: 60, unit: 'lbs', date: '11/3/2121' },
-  { name: 'overhead press', reps: 12, weight: 25, unit: 'lbs', date: '11/4/2121' },
-  { name: 'barbell row', reps: 10, weight: 40, unit: 'lbs', date: '11/5/2121' },
-];
+  return s3.getSignedUrl('getObject', params);
+}
 
-/**
-* be sure to install multer and express before running the code (npm install express multer)
-**/
-/**
- * 
- */
-(async () => {
-  for (const user of users) {
-    await createUser(user.name, user.reps, user.weight, user.unit, user.date);
-  }
-})();
+// Backend endpoint that generates a signed URL based on organization
+app.get('/download/:organizationId/:fileName', (req, res) => {
+  const { organizationId, fileName } = req.params;
+
+  // You could also validate the organizationId here, e.g., check if it’s a valid org
+  // This step can be adjusted based on your needs (e.g., no login required, just validate org ID)
+
+  const signedUrl = generateS3Url(organizationId, fileName);
+  res.json({ signedUrl });
+});
