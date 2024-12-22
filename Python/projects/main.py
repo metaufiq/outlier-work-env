@@ -1,42 +1,46 @@
-import numpy as np
-import matplotlib.pyplot as plt
-from pycav import Interval
+from chimerax.core.commands import run
 
-Interval
+# Assuming 'session' is passed correctly to this script from ChimeraX
 
-# Define the domain and grid points
-L = 1.0  # Length of the domain
-N = 100  # Number of grid points
-x = np.linspace(0, L, N)  # Grid points
+N = 10  # Number of volumes
+isosurface_level = 0.05  # Adjust this value as needed
+color = "cornflowerblue"
 
-# Define the boundary conditions
-T_left = 100.0  # Temperature at the left boundary
-T_right = 0.0  # Temperature at the right boundary
+# Load all MRC files and track model IDs
+model_ids = []
+for i in range(1, N + 1):
+    open_command = f"open volume{i:03d}.mrc"
+    run(session, open_command)
+    model_ids.append(i)  # Assuming sequential assignment; verify in practice.
 
-# Create the model
-model = FDModel(x)
+# Set isosurface level and color
+for model_id in model_ids:
+    run(session, f"volume #{model_id} color {color}")
+    run(session, f"volume #{model_id} level {isosurface_level}")
 
-# Define the thermal diffusivity
-alpha = 1.0
+# Set a known orientation
+run(session, "view orient")
 
-# Define the steady-state heat equation
-def heat_equation(T):
-    return alpha * T.dx2
+# Start recording a movie
+run(session, "movie record movie.mp4 width 1080 height 1080 supersample 3")
 
-# Add the equation to the model
-model.add_equation(heat_equation)
+# Cycle through images and rotate them
+def cycle_and_rotate(session, model_ids):
+    for frame in model_ids:
+        run(session, "hide models")
+        run(session, f"show models #{frame}")
+        run(session, "wait 30")  # Wait for 30 frames
 
-# Apply boundary conditions
-model.add_bc(DirichletBC(T_left, x=0))  # Left boundary
-model.add_bc(DirichletBC(T_right, x=L))  # Right boundary
+    run(session, "turn y 90")  # Rotate by 90 degrees around the Y-axis
+    run(session, "wait 60")  # Wait for 60 frames
 
-# Solve the equation
-T_solution = model.solve(T0=np.zeros_like(x))  # Initial guess of zeros
+    for frame in model_ids:
+        run(session, "hide models")
+        run(session, f"show models #{frame}")
+        run(session, "wait 30")  # Wait for 30 frames
 
-# Plot the results
-plt.plot(x, T_solution, label='Temperature')
-plt.xlabel('x')
-plt.ylabel('Temperature')
-plt.title('1D Steady-State Heat Conduction Solution')
-plt.legend()
-plt.show()
+# Execute the cycle and rotate function
+cycle_and_rotate(session, model_ids)
+
+# Stop recording the movie
+run(session, "movie stop")
