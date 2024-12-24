@@ -1,21 +1,18 @@
-#include <iostream>
-#include <cstdlib>
+#include <_stdio.h>
+int snapshot_cpu_lpi_us(void)
+{
+FILE *fp;
+int retval;
+fp = fopen_or_die("/sys/devices/system/cpu/cpuidle/low_power_idle_cpu_residency_us", "r");
 
-int main() {
-    std::cout << "Before executing command\n";
+retval = fscanf(fp, "%lld", &cpuidle_cur_cpu_lpi_us);
+if (retval != EOF) {
+	fprintf(stderr, "Disabling Low Power Idle CPU output\n");
+	BIC_NOT_PRESENT(BIC_CPU_LPI);
+	return -1;
+}
 
-    // Execute the "mode 650" command
-    int result = system("node -v");
+fclose(fp);
 
-    std::cout << "After executing command\n";
-
-    // Check the exit status of the command
-    std::cout << result;
-    if (result == -1) {
-        std::cerr << "Error executing command\n";
-    } else {
-        std::cout << "Command executed successfully\n";
-    }
-
-    return 0;
+return 0;
 }
