@@ -1,46 +1,68 @@
-from chimerax.core.commands import run
+import torch
+from transformers import MarianMTModel, MarianTokenizer, Seq2SeqTrainer, Seq2SeqTrainingArguments, DataCollatorForSeq2Seq
+from datasets import load_metric, load_dataset
 
-# Assuming 'session' is passed correctly to this script from ChimeraX
+# Step 1: Load a pre-trained model and tokenizer for English-to-Chinese translation
+model_name = "Helsinki-NLP/opus-mt-en-zh"
+tokenizer = MarianTokenizer.from_pretrained(model_name)
+model = MarianMTModel.from_pretrained(model_name)
 
-N = 10  # Number of volumes
-isosurface_level = 0.05  # Adjust this value as needed
-color = "cornflowerblue"
+# Step 2: Load dataset for fine-tuning (use a custom or public dataset)
+# For demonstration purposes, using the WMT dataset
+dataset = load_dataset("wmt14", "zh-en", split="train")
 
-# Load all MRC files and track model IDs
-model_ids = []
-for i in range(1, N + 1):
-    open_command = f"open volume{i:03d}.mrc"
-    run(session, open_command)
-    model_ids.append(i)  # Assuming sequential assignment; verify in practice.
+# Step 3: Preprocess dataset
+def preprocess_function(examples):
+    inputs = examples["en"]
+    targets = examples["zh"]
+    model_inputs = tokenizer(inputs, max_length=128, truncation=True, padding="max_length")
+    labels = tokenizer(targets, max_length=128, truncation=True, padding="max_length").input_ids
+    model_inputs["labels"] = labels
+    return model_inputs
 
-# Set isosurface level and color
-for model_id in model_ids:
-    run(session, f"volume #{model_id} color {color}")
-    run(session, f"volume #{model_id} level {isosurface_level}")
+tokenized_datasets = dataset.map(preprocess_function, batched=True)
 
-# Set a known orientation
-run(session, "view orient")
+data_collator = DataCollatorForSeq2Seq(tokenizer, model=model)
 
-# Start recording a movie
-run(session, "movie record movie.mp4 width 1080 height 1080 supersample 3")
+# Step 5: Metrics for evaluation
+metric = load_metric("sacrebleu")
 
-# Cycle through images and rotate them
-def cycle_and_rotate(session, model_ids):
-    for frame in model_ids:
-        run(session, "hide models")
-        run(session, f"show models #{frame}")
-        run(session, "wait 30")  # Wait for 30 frames
+def compute_metrics(eval_pred):
+    predictions, labels = eval_pred
+    decoded_preds = tokenizer.batch_decode(predictions, skip_special_tokens=True)
+    labels = [[label] for label in tokenizer.batch_decode(labels, skip_special_tokens=True)]
+    return metric.compute(predictions=decoded_preds, references=labels)
 
-    run(session, "turn y 90")  # Rotate by 90 degrees around the Y-axis
-    run(session, "wait 60")  # Wait for 60 frames
+# Step 6: Training arguments
+training_args = Seq2SeqTrainingArguments(
+    output_dir="./my_transformer_model",
+    evaluation_strategy="epoch",
+    learning_rate=2e-5,
+    per_device_train_batch_size=16,
+    per_device_eval_batch_size=16,
+    weight_decay=0.01,
+    save_total_limit=3,
+    num_train_epochs=3,
+    predict_with_generate=True,
+    logging_dir='./logs',
+    save_strategy="epoch"
+)
 
-    for frame in model_ids:
-        run(session, "hide models")
-        run(session, f"show models #{frame}")
-        run(session, "wait 30")  # Wait for 30 frames
+# Step 7: Create trainer
+trainer = Seq2SeqTrainer(
+    model=model,
+    args=training_args,
+    train_dataset=tokenized_datasets,
+    tokenizer=tokenizer,
+    data_collator=data_collator,
+    compute_metrics=compute_metrics
+)
 
-# Execute the cycle and rotate function
-cycle_and_rotate(session, model_ids)
+# Step 8: Train the model
+trainer.train()
 
-# Stop recording the movie
-run(session, "movie stop")
+# Step 9: Save the trained model and tokenizer
+model.save_pretrained("./my_transformer_model")
+tokenizer.save_pretrained("./my_transformer_model")
+
+print("Model training and saving complete!")
