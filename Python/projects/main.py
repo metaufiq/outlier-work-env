@@ -1,37 +1,70 @@
-from jira import JIRA
-import requests
+import pandas as pd
+import numpy as np
 
-class AlmJiraIntegration:
-    def __init__(self, jira_server, alm_username, alm_password, alm_base_url):
-        self.jira = JIRA(server=jira_server, options={"verify": False})
-        self.alm_username = alm_username
-        self.alm_password = alm_password
-        self.alm_base_url = alm_base_url
+def create_amortization_table(loan_amount=110000000, annual_rate=0.09, years=20, monthly_payment=1000000):
+    # Setup initial values
+    monthly_rate = annual_rate / 12
+    periods = years * 12
+    
+    # Create empty lists to store values
+    remaining_balance = []
+    interest_paid = []
+    principal_paid = []
+    total_paid = []
+    
+    balance = loan_amount
+    
+    # Calculate amortization schedule
+    for month in range(1, periods + 1):
+        # Calculate interest for this month
+        interest = balance * monthly_rate
+        
+        # Calculate principal for this month
+        principal = monthly_payment - interest
+        
+        # Update balance
+        balance = balance - principal
+        
+        # Store values
+        remaining_balance.append(round(balance))
+        interest_paid.append(round(interest))
+        principal_paid.append(round(principal))
+        total_paid.append(round(monthly_payment))
+    
+    # Create DataFrame
+    df = pd.DataFrame({
+        'Bulan': range(1, periods + 1),
+        'Cicilan': total_paid,
+        'Pokok': principal_paid,
+        'Bunga': interest_paid,
+        'Sisa Pinjaman': remaining_balance
+    })
+    
+    # Only show some representative months
+    months_to_show = [1, 2, 3, 12, 24, 36, 60, 120, 180, 240]
+    df_summary = df[df['Bulan'].isin(months_to_show)]
+    
+    return df_summary
 
-    def get_alm_project_data(self, project_id):
-        url = f"{self.alm_base_url}/api/projects/{project_id}"
-        response = requests.get(url, auth=(self.alm_username, self.alm_password))
-        if response.status_code == 200:
-            return response.json()
-        else:
-            response.raise_for_status()
+# Create and format the table
+df = create_amortization_table()
 
-    def display_alm_data_in_jira_issue(self, issue_key, alm_data):
-        # Implement logic to display ALM data within a JIRA issue
-        # For example, you can use JIRA's custom fields or comments
-        self.jira.add_comment(issue_key, f"ALM Data: {alm_data}")
+# Format the table for display
+def format_currency(x):
+    return f"Rp {x:,.0f}"
 
-# Example usage
-if __name__ == "__main__":
-    alm_jira_integration = AlmJiraIntegration(
-        jira_server="https://your-jira-instance.com",
-        alm_username="your-alm-username",
-        alm_password="your-alm-password",
-        alm_base_url="https://your-alm-instance.com"
-    )
+print("\nTabel Amortisasi KPR:")
+print(f"Pinjaman Awal: Rp 110,000,000")
+print(f"Bunga: 9% per tahun")
+print(f"Tenor: 20 tahun")
+print(f"Cicilan per bulan: Rp 1,000,000\n")
 
-    project_id = "your-alm-project-id"
-    alm_data = alm_jira_integration.get_alm_project_data(project_id)
+formatted_df = df.copy()
+for col in ['Cicilan', 'Pokok', 'Bunga', 'Sisa Pinjaman']:
+    formatted_df[col] = formatted_df[col].apply(format_currency)
 
-    issue_key = "your-jira-issue-key"
-    alm_jira_integration.display_alm_data_in_jira_issue(issue_key, alm_data)
+print(formatted_df.to_string(index=False))
+
+# Calculate total interest paid
+total_interest = df['Bunga'].sum()
+print(f"\nTotal bunga yang dibayar selama 20 tahun: {format_currency(total_interest)}")
